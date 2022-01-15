@@ -1338,7 +1338,7 @@ _p9k_prompt_fvm_init() {
 ################################################################
 # Segment that displays the battery status in levels and colors
 prompt_battery() {
-  [[ $_p9k_os == (Linux|Android) ]] && _p9k_prompt_battery_set_args
+  [[ $_p9k_os == (Linux|Android|BSD) ]] && _p9k_prompt_battery_set_args
   (( $#_p9k__battery_args )) && _p9k_prompt_segment "${_p9k__battery_args[@]}"
 }
 
@@ -1457,6 +1457,26 @@ _p9k_prompt_battery_set_args() {
         fi
       fi
     ;;
+
+    BSD)
+      bat_percent=$((apm -l))
+      case $((apm -b)) in
+        # From apm(8):
+        # Display the battery status. 0 means high, 1 means low, 2
+        # means critical, 3 means charging, 4 means absent, and 255
+        # means unknown.
+        0)      state=DISCONNECTED;;
+        1|2)    state=LOW;;
+        3)
+          if (( bat_percent == 100 )); then
+            state=CHARGED
+          else
+            state=CHARGING
+          fi
+          ;;
+        4)      state=DISCONNECTED;;
+      esac
+      ;;
 
     *)
       return 0
